@@ -18,6 +18,7 @@ std::string wv::GLSLFactory::build()
 	src += "#extension GL_ARB_bindless_texture : require\n";
 	src += "#extension GL_ARB_shader_draw_parameters : enable\n\n";
 	
+	src += _buildInput();
 	src += _buildVertexInput();
 	src += _buildFragments();
 	src += _buildOutput();
@@ -95,6 +96,33 @@ std::string wv::GLSLFactory::_formatOutput( const std::string& _arg )
 	return _arg;
 }
 
+std::string wv::GLSLFactory::_buildInput()
+{
+	std::string res;
+
+	if( m_stage == Shader::kVertex )
+	{
+		res += m_cameraData;
+		res += m_instanceData;
+		res += m_instanceFunctions;
+		m_fragmentReturnTypes.insert( { "getAlbedoSampler", "sampler2D" } );
+	}
+
+	for( auto& in : m_inputs )
+	{
+		Shader::ShaderInputOutput v = in.second;
+		if( v.bindpoint == -1 )
+			res += wv::format( "in %s %s;\n", v.type.c_str(), in.first.c_str() );
+		else
+			res += wv::format( "layout(location = %i) out %s %s;\n", v.bindpoint, v.type.c_str(), in.first.c_str());
+	}
+	if( !m_inputs.empty() )
+		res += "\n";
+	
+
+	return res;
+}
+
 std::string wv::GLSLFactory::_buildVertexInput()
 {
 	if( m_vertexInput.size() == 0 )
@@ -160,20 +188,26 @@ std::string wv::GLSLFactory::_buildMain()
 	res += "void main() {\n";
 	for( auto& f : m_executionFunctions )
 	{
+		std::string func = _formatArg( f.name, "" );
 		if( m_fragmentReturnTypes.count( f.name ) == 0 )
 		{
 			res += wv::format( "\t/* function %s not defined */\n", f.name.c_str() );
 			continue;
 		}
 		std::string type = m_fragmentReturnTypes.at( f.name );
-		std::string args = " ";
-		for( size_t i = 0; i < f.args.size(); i++ )
-		{
-			std::string arg = _formatArg( f.args[ i ], "" );
-			args += wv::format( "%s%s", arg.c_str(), i == f.args.size() - 1 ? " " : ", ");
-		}
 		
-		res += wv::format( "\t%s %s = %s(%s);\n", type.c_str(), f.returnName.c_str(), f.name.c_str(), args.c_str() );
+		if( f.name[ 0 ] == '$' )
+			res += wv::format( "\t%s %s = %s;\n", type.c_str(), f.returnName.c_str(), f.name.c_str() );
+		else
+		{
+			std::string args = " ";
+			for( size_t i = 0; i < f.args.size(); i++ )
+			{
+				std::string arg = _formatArg( f.args[ i ], "" );
+				args += wv::format( "%s%s", arg.c_str(), i == f.args.size() - 1 ? " " : ", ");
+			}
+			res += wv::format( "\t%s %s = %s(%s);\n", type.c_str(), f.returnName.c_str(), f.name.c_str(), args.c_str() );
+		}
 	}
 
 	for( auto& f : m_outputValues )
