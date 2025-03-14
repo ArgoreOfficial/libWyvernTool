@@ -11,6 +11,8 @@ std::string wv::GLSLFactory::build()
 		return "";
 	}
 
+	_parseIdentifiers();
+
 	std::string src;
 	
 	// build header
@@ -27,6 +29,15 @@ std::string wv::GLSLFactory::build()
 	reset();
 
 	return src;
+}
+
+void wv::GLSLFactory::_parseIdentifiers()
+{
+	for( auto v : m_vertexInput )
+	{
+		std::string identifier = wv::format( "get%s", v.name.c_str() );
+		m_identifiers[ identifier ] = v.type;
+	}
 }
 
 wv::Shader::TypeDecl wv::GLSLFactory::_getRealVertexInputType( const Shader::TypeDecl& _input )
@@ -70,14 +81,19 @@ std::string wv::GLSLFactory::_buildVertexPullFunction( const Shader::TypeDecl& _
 	return func;
 }
 
-std::string wv::GLSLFactory::_formatArg( const std::string& _arg, const std::string& _type )
+std::string wv::GLSLFactory::_formatArg( const std::string& _arg, const std::string& _type, bool _onlyIdentifier )
 {
 	if( _arg.empty() || ( _arg[ 0 ] != '$' && _arg[ 0 ] != '#' ) )
 		return _arg;
 
 	std::string substr = _arg.substr( 2, _arg.size() - 3 );
 	if( _arg[ 0 ] == '$' )
-		return wv::format( "get%s(gl_VertexID)", substr.c_str() );
+	{
+		if( _onlyIdentifier )
+			return wv::format( "get%s", substr.c_str() );
+		else
+			return wv::format( "get%s(gl_VertexID)", substr.c_str() );
+	}
 	else if( _arg[ 0 ] == '#' )
 		return wv::format( "%s(%s)", _type.c_str(), substr.c_str() );
 	return _arg;
@@ -105,7 +121,7 @@ std::string wv::GLSLFactory::_buildInput()
 		res += m_cameraData;
 		res += m_instanceData;
 		res += m_instanceFunctions;
-		m_fragmentReturnTypes.insert( { "getAlbedoSampler", "sampler2D" } );
+		m_identifiers[ "getAlbedoSampler" ] = "sampler2D";
 	}
 
 	for( auto& in : m_inputs )
@@ -118,7 +134,6 @@ std::string wv::GLSLFactory::_buildInput()
 	}
 	if( !m_inputs.empty() )
 		res += "\n";
-	
 
 	return res;
 }
@@ -188,16 +203,16 @@ std::string wv::GLSLFactory::_buildMain()
 	res += "void main() {\n";
 	for( auto& f : m_executionFunctions )
 	{
-		std::string func = _formatArg( f.name, "" );
-		if( m_fragmentReturnTypes.count( f.name ) == 0 )
+		std::string func = _formatArg( f.name, "", true );
+		if( m_identifiers.count( func ) == 0 )
 		{
 			res += wv::format( "\t/* function %s not defined */\n", f.name.c_str() );
 			continue;
 		}
-		std::string type = m_fragmentReturnTypes.at( f.name );
+		std::string type = m_identifiers.at( func );
 		
 		if( f.name[ 0 ] == '$' )
-			res += wv::format( "\t%s %s = %s;\n", type.c_str(), f.returnName.c_str(), f.name.c_str() );
+			res += wv::format( "\t%s %s = %s(gl_VertexID);\n", type.c_str(), f.returnName.c_str(), func.c_str() );
 		else
 		{
 			std::string args = " ";

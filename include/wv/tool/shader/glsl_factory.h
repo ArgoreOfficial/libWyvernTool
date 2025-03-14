@@ -11,9 +11,11 @@ public:
 
 private:
 
+	void _parseIdentifiers();
+
 	Shader::TypeDecl _getRealVertexInputType( const Shader::TypeDecl& _input );
 	std::string _buildVertexPullFunction( const Shader::TypeDecl& _input );
-	std::string _formatArg( const std::string& _arg, const std::string& _type );
+	std::string _formatArg( const std::string& _arg, const std::string& _type, bool _onlyIdentifier = false );
 	std::string _formatOutput( const std::string& _arg );
 
 	std::string _buildInput();

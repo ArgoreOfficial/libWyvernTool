@@ -66,7 +66,7 @@ public:
 
 	void addFragment( const std::string& _returnType, const std::string& _name, const std::string& _body ) {
 		m_fragments.push_back( _body + "\n" );
-		m_fragmentReturnTypes.insert( { _name, _returnType } );
+		m_identifiers[ _name ] = _returnType;
 	}
 
 	void addFunction( const std::string& _returnName, const std::string& _name, const std::vector<std::string>& _args = {} ) {
@@ -87,9 +87,9 @@ protected:
 	std::unordered_map<std::string, ShaderInputOutput> m_inputs;
 	std::unordered_map<std::string, ShaderInputOutput> m_outputs;
 
-	std::vector<std::string> m_fragments;
-	std::unordered_map<std::string, std::string> m_fragmentReturnTypes;
+	std::unordered_map<std::string, std::string> m_identifiers; // m_identifiers["name"] == "type"
 
+	std::vector<std::string> m_fragments;
 	std::vector<Shader::Function> m_executionFunctions;
 	std::vector<std::pair<std::string, std::string>> m_outputValues;
 };
