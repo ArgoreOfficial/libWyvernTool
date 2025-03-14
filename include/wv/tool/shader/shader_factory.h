@@ -32,19 +32,36 @@ struct Function
 	std::vector<std::string> args;
 };
 
+struct ShaderInputOutput
+{
+	int32_t bindpoint = -1;
+	std::string type;
+};
+
+enum Stage
+{
+	kNone = 0,
+	kVertex,
+	kFragment
+};
+
 class Factory
 {
 public:
-	void begin( const std::string& _name ) {
-		m_name = _name;
+	void setStage( Shader::Stage _stage ) {
+		m_stage = _stage;
 	}
 
 	void addVertexInput( std::string _type, std::string _name, uint32_t _count = 1 ) {
 		m_vertexInput.push_back( { _type, _name, _count } );
 	}
 
-	void addVertexOutput( std::string _type, std::string _name ) {
-		m_vertexOutput.insert( { _name, _type } );
+	void addInput( std::string _type, std::string _name, int32_t bindpoint = -1 ) {
+		m_inputs[ _name ] = { bindpoint, _type };
+	}
+
+	void addOutput( std::string _type, std::string _name, int32_t bindpoint = -1 ) {
+		m_outputs[ _name ] = { bindpoint, _type };
 	}
 
 	void addFragment( const std::string& _returnType, const std::string& _name, const std::string& _body ) {
@@ -56,7 +73,7 @@ public:
 		m_executionFunctions.push_back( { _returnName, _name, _args } );
 	}
 
-	void addOutput( const std::string& _out, const std::string& _value ) {
+	void setOutputValue( const std::string& _out, const std::string& _value ) {
 		m_outputValues.push_back( { _out, _value } );
 	}
 
@@ -64,10 +81,11 @@ public:
 	virtual std::string build() = 0;
 
 protected:
-	std::string m_name = "";
+	Shader::Stage m_stage = Shader::kNone;
 
 	std::vector<TypeDecl> m_vertexInput;
-	std::unordered_map<std::string, std::string> m_vertexOutput;
+	std::unordered_map<std::string, ShaderInputOutput> m_inputs;
+	std::unordered_map<std::string, ShaderInputOutput> m_outputs;
 
 	std::vector<std::string> m_fragments;
 	std::unordered_map<std::string, std::string> m_fragmentReturnTypes;

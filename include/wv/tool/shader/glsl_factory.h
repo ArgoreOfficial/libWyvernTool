@@ -13,14 +13,13 @@ private:
 
 	Shader::TypeDecl _getRealVertexInputType( const Shader::TypeDecl& _input );
 	std::string _buildVertexPullFunction( const Shader::TypeDecl& _input );
-	std::string _formatArg( const std::string& _arg );
+	std::string _formatArg( const std::string& _arg, const std::string& _type );
 	std::string _formatOutput( const std::string& _arg );
 
 	std::string _buildVertexInput();
-	std::string _buildVertexOutput();
+	std::string _buildOutput();
 	std::string _buildFragments();
 	std::string _buildMain();
-
 
 	const std::string m_vertexBufferName = "u_vertices";
 	

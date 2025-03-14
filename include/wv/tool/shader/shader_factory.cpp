@@ -3,7 +3,7 @@
 void wv::Shader::Factory::reset()
 {
 	m_vertexInput.clear();
-	m_vertexOutput.clear();
+	m_outputs.clear();
 
 	m_fragments.clear();
 	m_executionFunctions.clear();

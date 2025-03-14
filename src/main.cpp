@@ -4,19 +4,35 @@
 
 #include <wv/tool/shader/glsl_factory.h>
 
+std::string generateVertShader();
+std::string generateFragShader();
+
 int main()
 {
-	wv::GLSLFactory glslFactory;
-	glslFactory.begin( "test_vs.glsl" );
-	glslFactory.addVertexInput( "vec3", "Position"  );
-	glslFactory.addVertexInput( "vec3", "Normal"    );
-	glslFactory.addVertexInput( "vec3", "Tangent"   );
-	glslFactory.addVertexInput( "vec4", "Color"     );
-	glslFactory.addVertexInput( "vec2", "TexCoord0" );
+	std::string vertSource = generateVertShader();
+	std::string fragSource = generateFragShader();
+	printf( "================ test.vert ================\n" );
+	printf( "%s\n", vertSource.c_str() );
+	printf( "================ test.frag ================\n" );
+	printf( "%s\n", fragSource.c_str() );
+	printf( "===========================================\n" );
 
-	glslFactory.addVertexOutput( "vec2", "TexCoord" );
-	glslFactory.addVertexOutput( "vec3", "Normal" );
-	glslFactory.addVertexOutput( "vec4", "Position" );
+	return 0;
+}
+
+std::string generateVertShader()
+{
+	wv::GLSLFactory factory{};
+	factory.setStage( wv::Shader::kVertex );
+	factory.addVertexInput( "vec3", "Position" );
+	factory.addVertexInput( "vec3", "Normal" );
+	factory.addVertexInput( "vec3", "Tangent" );
+	factory.addVertexInput( "vec4", "Color" );
+	factory.addVertexInput( "vec2", "TexCoord0" );
+
+	factory.addOutput( "vec2", "TexCoord" );
+	factory.addOutput( "vec3", "Normal" );
+	factory.addOutput( "vec4", "Position" );
 
 	// GLSL Specific
 	std::string lightMultFunction =
@@ -24,19 +40,37 @@ int main()
 		"	return dot( _normal, _lightdir ) * 0.5 + 0.5;\n"
 		"}";
 
-	glslFactory.addFragment( "float", "light_mult", lightMultFunction );
-	glslFactory.addFragment( "vec4", "world_to_screen", "#define world_to_screen(_point) u_Projection * u_View * u_Model * vec4(_point, 1.0)" );
+	factory.addFragment( "float", "light_mult", lightMultFunction );
+	factory.addFragment( "vec4", "world_to_screen", "#define world_to_screen(_point) u_Projection * u_View * u_Model * vec4(_point, 1.0)" );
 
 	// void main() {
-	glslFactory.addFunction( "position", "world_to_screen", { "${Position}" } );
+	factory.addFunction( "position", "world_to_screen", { "${Position}" } );
 
-	glslFactory.addOutput( "TexCoord", "${TexCoord0}" );
-	glslFactory.addOutput( "Normal",   ""             ); // default
-	glslFactory.addOutput( "${Position}", "position"  );
+	factory.setOutputValue( "TexCoord",    "${TexCoord0}" );
+	factory.setOutputValue( "Normal",      "#{0.0}"       ); 
+	factory.setOutputValue( "${Position}", "position"     );
 	// }
-	
-	std::string shaderSource = glslFactory.build();
-	printf( "%s\n", shaderSource.c_str() );
 
-	return 0;
+	return factory.build();
+}
+
+std::string generateFragShader()
+{
+	wv::GLSLFactory factory;
+	factory.setStage( wv::Shader::kFragment );
+	factory.addInput( "vec2", "TexCoord" );
+	factory.addInput( "vec3", "Normal" );
+	factory.addInput( "vec4", "Position" );
+
+	factory.addOutput( "vec4", "Albedo",            0 );
+	factory.addOutput( "vec2", "Normal",            1 );
+	factory.addOutput( "vec2", "RoughnessMetallic", 2 );
+
+	// void main() {
+	factory.setOutputValue( "Albedo",            "#{0.0}" );
+	factory.setOutputValue( "Normal",            "Normal" );
+	factory.setOutputValue( "RoughnessMetallic", "#{1.0}" );
+	// }
+
+	return factory.build();
 }

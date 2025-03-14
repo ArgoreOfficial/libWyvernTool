@@ -5,6 +5,12 @@
 
 std::string wv::GLSLFactory::build()
 {
+	if( m_stage == Shader::kNone )
+	{
+		// error
+		return "";
+	}
+
 	std::string src;
 	
 	// build header
@@ -13,11 +19,8 @@ std::string wv::GLSLFactory::build()
 	src += "#extension GL_ARB_shader_draw_parameters : enable\n\n";
 	
 	src += _buildVertexInput();
-	src += "\n";
 	src += _buildFragments();
-	src += "\n";
-	src += _buildVertexOutput();
-	src += "\n";
+	src += _buildOutput();
 	src += _buildMain();
 
 	reset();
@@ -66,13 +69,17 @@ std::string wv::GLSLFactory::_buildVertexPullFunction( const Shader::TypeDecl& _
 	return func;
 }
 
-std::string wv::GLSLFactory::_formatArg( const std::string& _arg )
+std::string wv::GLSLFactory::_formatArg( const std::string& _arg, const std::string& _type )
 {
-	if( _arg.empty() || ( _arg[ 0 ] != '$' && _arg[ 0 ] != '&' ) )
+	if( _arg.empty() || ( _arg[ 0 ] != '$' && _arg[ 0 ] != '#' ) )
 		return _arg;
 
 	std::string substr = _arg.substr( 2, _arg.size() - 3 );
-	return wv::format( "get%s(gl_VertexID)", substr.c_str() );
+	if( _arg[ 0 ] == '$' )
+		return wv::format( "get%s(gl_VertexID)", substr.c_str() );
+	else if( _arg[ 0 ] == '#' )
+		return wv::format( "%s(%s)", _type.c_str(), substr.c_str() );
+	return _arg;
 }
 
 std::string wv::GLSLFactory::_formatOutput( const std::string& _arg )
@@ -91,7 +98,7 @@ std::string wv::GLSLFactory::_formatOutput( const std::string& _arg )
 std::string wv::GLSLFactory::_buildVertexInput()
 {
 	if( m_vertexInput.size() == 0 )
-		return "\n";
+		return "";
 
 	std::string vertexStruct;
 	vertexStruct += wv::format( "struct vertex_t {\n" );
@@ -116,13 +123,23 @@ std::string wv::GLSLFactory::_buildVertexInput()
 	return vertexInput;
 }
 
-std::string wv::GLSLFactory::_buildVertexOutput()
+std::string wv::GLSLFactory::_buildOutput()
 {
 	std::string res;
-	res += m_outVertex;
+	
+	if( m_stage == Shader::kVertex )
+		res += m_outVertex;
 
-	for( auto& out : m_vertexOutput )
-		res += wv::format( "out %s %s;\n", out.second, out.first );
+	for( auto& out : m_outputs )
+	{
+		Shader::ShaderInputOutput v = out.second;
+		if( v.bindpoint == -1 )
+			res += wv::format( "out %s %s;\n", v.type.c_str(), out.first.c_str() );
+		else
+			res += wv::format( "layout(location = %i) out %s %s;\n", v.bindpoint, v.type.c_str(), out.first.c_str());
+	}
+	if( !m_outputs.empty() )
+		res += "\n";
 	
 	return res;
 }
@@ -143,10 +160,18 @@ std::string wv::GLSLFactory::_buildMain()
 	res += "void main() {\n";
 	for( auto& f : m_executionFunctions )
 	{
+		if( m_fragmentReturnTypes.count( f.name ) == 0 )
+		{
+			res += wv::format( "\t/* function %s not defined */\n", f.name.c_str() );
+			continue;
+		}
 		std::string type = m_fragmentReturnTypes.at( f.name );
 		std::string args = " ";
 		for( size_t i = 0; i < f.args.size(); i++ )
-			args += wv::format( "%s%s", _formatArg( f.args[ i ] ).c_str(), i == f.args.size() - 1 ? " " : ", ");
+		{
+			std::string arg = _formatArg( f.args[ i ], "" );
+			args += wv::format( "%s%s", arg.c_str(), i == f.args.size() - 1 ? " " : ", ");
+		}
 		
 		res += wv::format( "\t%s %s = %s(%s);\n", type.c_str(), f.returnName.c_str(), f.name.c_str(), args.c_str() );
 	}
@@ -154,9 +179,14 @@ std::string wv::GLSLFactory::_buildMain()
 	for( auto& f : m_outputValues )
 	{
 		std::string name = _formatOutput( f.first );
-		std::string value = _formatArg( f.second );
+		std::string type = "";
+		if( m_outputs.count( name ) )
+			type = m_outputs.at( name ).type;
+
+		std::string value = _formatArg( f.second, type );
 		if( value == "" )
-			value = wv::format( "%s(0)", m_vertexOutput.at( f.first ).c_str() );
+			value = wv::format( "%s(0)", type );
+
 		res += wv::format( "\t%s = %s;\n", name.c_str(), value.c_str() );
 	}
 
