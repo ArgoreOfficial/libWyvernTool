@@ -13,6 +13,19 @@ std::string wv::GLSLFactory::build()
 
 	_parseIdentifiers();
 
+	// core fragments
+	loadFragment( "core/texture" );
+	loadFragment( "core/vec2" );
+	loadFragment( "core/vec3" );
+	loadFragment( "core/vec4" );
+
+	if( m_stage == Shader::kVertex )
+	{
+		loadFragment( "core/vert/AlbedoSampler" );
+		loadFragment( "core/vert/ModelMatrix" );
+		loadFragment( "core/vert/HasAlpha" );
+	}
+
 	std::string src;
 	
 	// build header
@@ -89,8 +102,16 @@ std::string wv::GLSLFactory::_evaluateTypename( const std::string& _arg, const s
 	std::string substr = _arg.substr( 2, _arg.size() - 3 );
 	if( _arg[ 0 ] == '$' )
 	{
-		// check getX identifier
-		if( m_identifiers.count( "get" + substr ) != 0 )
+		// check X() identifier
+		if( m_identifiers.count( substr ) != 0 )
+		{
+			if( _onlyIdentifier )
+				return wv::format( "%s", substr.c_str() );
+			else
+				return wv::format( "%s()", substr.c_str() );
+		}
+		// check getX() identifier
+		else if( m_identifiers.count( "get" + substr ) != 0 )
 		{
 			if( _onlyIdentifier )
 				return wv::format( "get%s", substr.c_str() );
@@ -98,11 +119,7 @@ std::string wv::GLSLFactory::_evaluateTypename( const std::string& _arg, const s
 				return wv::format( "get%s()", substr.c_str() );
 		}
 		else
-		{
 			return _evaluateConstTypename( _arg );
-			//return "/*error: get" + substr + " not defined*/";
-		}
-
 	}
 	else if( _arg[ 0 ] == '#' )
 		return wv::format( "%s(%s)", _type.c_str(), substr.c_str() );
@@ -129,8 +146,6 @@ std::string wv::GLSLFactory::_buildInput()
 	{
 		res += m_cameraData;
 		res += m_instanceData;
-		res += m_instanceFunctions;
-		_loadDefaultVertexIdentifiers();
 	}
 
 	for( auto& in : m_inputs )
@@ -251,12 +266,4 @@ std::string wv::GLSLFactory::_buildMain()
 	res += "}\n";
 
 	return res;
-}
-
-void wv::GLSLFactory::_loadDefaultVertexIdentifiers()
-{
-	m_identifiers[ "getAlbedoSampler" ] = "sampler2D";
-	m_identifiers[ "getModelMatrix"   ] = "mat4x4";
-	m_identifiers[ "getHasAlpha"      ] = "int";
-	m_identifiers[ "texture"          ] = "vec4";
 }

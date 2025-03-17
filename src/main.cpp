@@ -10,10 +10,10 @@ std::string generateBasicFragShader();
 
 int main()
 {
-	std::ofstream vs( "basic_vs.glsl" );
+	std::ofstream vs( "generated/basic_vs.glsl" );
 	vs << generateBasicVertShader();
 
-	std::ofstream fs( "basic_fs.glsl" );
+	std::ofstream fs( "generated/basic_fs.glsl" );
 	fs << generateBasicFragShader();
 
 	return 0;
@@ -42,7 +42,7 @@ std::string generateBasicVertShader()
 	factory.loadFragment( "funcs/light_mult" );
 
 	// void main() {
-	factory.addFunction( "model", "getModelMatrix" );
+	factory.addFunction( "model", "${ModelMatrix}" );
 	factory.addFunction( "view_pos", "world_to_view3", { "${Position}", "model" });
 	factory.addFunction( "clip_pos", "world_to_clip4", { "${Position}", "model" });
 	factory.addFunction( "world_norm", "tangent_to_world3", { "${Normal}", "model" });
@@ -74,10 +74,6 @@ std::string generateBasicFragShader()
 	factory.addOutput( "vec2", "out_Normal", 1 );
 	factory.addOutput( "vec2", "out_RoughnessMetallic", 2 );
 	
-	factory.loadFragment( "core/texture" );
-	factory.loadFragment( "core/vec2" );
-	factory.loadFragment( "core/vec3" );
-	factory.loadFragment( "core/vec4" );
 	factory.loadFragment( "funcs/encode_normal_oct" );
 
 	// void main() {
