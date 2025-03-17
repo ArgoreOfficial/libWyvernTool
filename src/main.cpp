@@ -3,24 +3,12 @@
 #include <vector>
 
 #include <wv/tool/shader/glsl_factory.h>
-#include <wv/svensk.hpp>
 
 std::string generateVertShader();
 std::string generateFragShader();
 
-tom gör_saker som_tar_in stor_siffra _a, bred_karaktär_t _w som_parametrar då
-	skrivare som_tar_in "_a plus _w är %i\n", _a plus _w som_parametrar radslut
-slut
-
-tom funktion som_inte_tar_några_parametrar då
-	konstant siffra som_inte_kan_gå_minus antal_träd är tolv;
-slut
-
 int main()
 {
-	gör_saker som_tar_in 1, 4 som_parametrar radslut
-	funktion som_inte_tar_några_parametrar radslut
-
 	std::string vertSource = generateVertShader();
 	std::string fragSource = generateFragShader();
 	printf( "================ test.vert ================\n" );
@@ -46,13 +34,8 @@ std::string generateVertShader()
 	factory.addOutput( "vec3", "out_Normal"   );
 	factory.addOutput( "vec4", "out_Position" );
 
-	// GLSL Specific
-	std::string lightMultFunction =
-		"float light_mult(vec3 _normal, vec3 _lightdir) {\n"
-		"	return dot( _normal, _lightdir ) * 0.5 + 0.5;\n"
-		"}";
-	factory.addFragment( "float", "light_mult", lightMultFunction );
-	factory.addFragment( "vec4", "world_to_screen", "#define world_to_screen(_point) u_Projection * u_View * u_Model * vec4(_point, 1.0)" );
+	factory.loadFragment( "inline/world_to_screen" );
+	factory.loadFragment( "funcs/light_mult" );
 
 	// void main() {
 	factory.addFunction( "position", "world_to_screen", { "${Position}" } );

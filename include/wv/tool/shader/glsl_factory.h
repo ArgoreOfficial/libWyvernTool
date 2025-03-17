@@ -8,6 +8,8 @@ class GLSLFactory : public Shader::Factory
 {
 public:
 	virtual std::string build() override;
+	virtual std::string getFragmentsDir() override { return "fragments/glsl/"; }
+	virtual std::string getFragmentExtension() override { return ".glsl"; }
 
 private:
 

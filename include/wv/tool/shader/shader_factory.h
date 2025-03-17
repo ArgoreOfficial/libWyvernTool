@@ -48,37 +48,22 @@ enum Stage
 class Factory
 {
 public:
-	void setStage( Shader::Stage _stage ) {
-		m_stage = _stage;
-	}
+	void setStage( Shader::Stage _stage );
+	void addVertexInput( std::string _type, std::string _name, uint32_t _count = 1 );
+	void addInput( std::string _type, std::string _name, int32_t bindpoint = -1 );
+	void addOutput( std::string _type, std::string _name, int32_t bindpoint = -1 );
 
-	void addVertexInput( std::string _type, std::string _name, uint32_t _count = 1 ) {
-		m_vertexInput.push_back( { _type, _name, _count } );
-	}
+	void addFragment( const std::string& _returnType, const std::string& _name, const std::string& _body );
+	void loadFragment( const std::string& _filename );
 
-	void addInput( std::string _type, std::string _name, int32_t bindpoint = -1 ) {
-		m_inputs[ _name ] = { bindpoint, _type };
-	}
+	void addFunction( const std::string& _returnName, const std::string& _name, const std::vector<std::string>& _args = {} );
 
-	void addOutput( std::string _type, std::string _name, int32_t bindpoint = -1 ) {
-		m_outputs[ _name ] = { bindpoint, _type };
-	}
-
-	void addFragment( const std::string& _returnType, const std::string& _name, const std::string& _body ) {
-		m_fragments.push_back( _body + "\n" );
-		m_identifiers[ _name ] = _returnType;
-	}
-
-	void addFunction( const std::string& _returnName, const std::string& _name, const std::vector<std::string>& _args = {} ) {
-		m_executionFunctions.push_back( { _returnName, _name, _args } );
-	}
-
-	void setOutputValue( const std::string& _out, const std::string& _value ) {
-		m_outputValues.push_back( { _out, _value } );
-	}
+	void setOutputValue( const std::string& _out, const std::string& _value );
 
 	virtual void reset();
 	virtual std::string build() = 0;
+	virtual std::string getFragmentsDir() = 0;
+	virtual std::string getFragmentExtension() = 0;
 
 protected:
 	Shader::Stage m_stage = Shader::kNone;
