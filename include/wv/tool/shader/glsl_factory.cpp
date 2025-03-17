@@ -69,11 +69,11 @@ std::string wv::GLSLFactory::_buildVertexPullFunction( const Shader::TypeDecl& _
 
 	Shader::TypeDecl v = _getRealVertexInputType( _input ); // for real component count
 
-	func += wv::format( "%s get%s(int _idx) {\n", _input.type, _input.name );
+	func += wv::format( "%s get%s() {\n", _input.type, _input.name );
 	func += wv::format( "    return %s(\n", _input.type );
 
 	for( size_t i = 0; i < v.count; i++ )
-		func += wv::format( "        %s[_idx].%s[%i]%s", m_vertexBufferName, _input.name, i, i == v.count - 1 ? "\n" : ",\n" );
+		func += wv::format( "        %s[gl_VertexID].%s[%i]%s", m_vertexBufferName, _input.name, i, i == v.count - 1 ? "\n" : ",\n" );
 
 	func += "    );\n";
 	func += "}\n";
@@ -81,7 +81,7 @@ std::string wv::GLSLFactory::_buildVertexPullFunction( const Shader::TypeDecl& _
 	return func;
 }
 
-std::string wv::GLSLFactory::_formatArg( const std::string& _arg, const std::string& _type, bool _onlyIdentifier )
+std::string wv::GLSLFactory::_evaluateTypename( const std::string& _arg, const std::string& _type, bool _onlyIdentifier )
 {
 	if( _arg.empty() || ( _arg[ 0 ] != '$' && _arg[ 0 ] != '#' ) )
 		return _arg;
@@ -89,27 +89,36 @@ std::string wv::GLSLFactory::_formatArg( const std::string& _arg, const std::str
 	std::string substr = _arg.substr( 2, _arg.size() - 3 );
 	if( _arg[ 0 ] == '$' )
 	{
-		if( _onlyIdentifier )
-			return wv::format( "get%s", substr.c_str() );
+		// check getX identifier
+		if( m_identifiers.count( "get" + substr ) != 0 )
+		{
+			if( _onlyIdentifier )
+				return wv::format( "get%s", substr.c_str() );
+			else
+				return wv::format( "get%s()", substr.c_str() );
+		}
 		else
-			return wv::format( "get%s(gl_VertexID)", substr.c_str() );
+		{
+			return _evaluateConstTypename( _arg );
+			//return "/*error: get" + substr + " not defined*/";
+		}
+
 	}
 	else if( _arg[ 0 ] == '#' )
 		return wv::format( "%s(%s)", _type.c_str(), substr.c_str() );
 	return _arg;
 }
 
-std::string wv::GLSLFactory::_formatOutput( const std::string& _arg )
+std::string wv::GLSLFactory::_evaluateConstTypename( const std::string& _arg )
 {
-	if( _arg.empty() || _arg[ 0 ] != '$' )
+	if( _arg.size() < 3 || _arg[ 0 ] != '$' )
 		return _arg;
 
 	std::string substr = _arg.substr( 2, _arg.size() - 3 );
-	
-	if( substr == "Position" )
-		return "gl_Position";
-	
-	return _arg;
+	if( m_constTypenames.count( substr ) == 0 )
+		return "/*error: " + substr + " not defined*/"; // not a const
+
+	return m_constTypenames.at( substr );
 }
 
 std::string wv::GLSLFactory::_buildInput()
@@ -121,7 +130,7 @@ std::string wv::GLSLFactory::_buildInput()
 		res += m_cameraData;
 		res += m_instanceData;
 		res += m_instanceFunctions;
-		m_identifiers[ "getAlbedoSampler" ] = "sampler2D";
+		_loadDefaultVertexIdentifiers();
 	}
 
 	for( auto& in : m_inputs )
@@ -201,9 +210,10 @@ std::string wv::GLSLFactory::_buildMain()
 	std::string res;
 
 	res += "void main() {\n";
+
 	for( auto& f : m_executionFunctions )
 	{
-		std::string func = _formatArg( f.name, "", true );
+		std::string func = _evaluateTypename( f.name, "", true );
 		if( m_identifiers.count( func ) == 0 )
 		{
 			res += wv::format( "    /* function %s not defined */\n", f.name.c_str() );
@@ -212,13 +222,13 @@ std::string wv::GLSLFactory::_buildMain()
 		std::string type = m_identifiers.at( func );
 		
 		if( f.name[ 0 ] == '$' )
-			res += wv::format( "    %s %s = %s(gl_VertexID);\n", type.c_str(), f.returnName.c_str(), func.c_str() );
+			res += wv::format( "    %s %s = %s();\n", type.c_str(), f.returnName.c_str(), func.c_str() );
 		else
 		{
 			std::string args = " ";
 			for( size_t i = 0; i < f.args.size(); i++ )
 			{
-				std::string arg = _formatArg( f.args[ i ], "" );
+				std::string arg = _evaluateTypename( f.args[ i ], "" );
 				args += wv::format( "%s%s", arg.c_str(), i == f.args.size() - 1 ? " " : ", ");
 			}
 			res += wv::format( "    %s %s = %s(%s);\n", type.c_str(), f.returnName.c_str(), f.name.c_str(), args.c_str() );
@@ -227,12 +237,12 @@ std::string wv::GLSLFactory::_buildMain()
 
 	for( auto& f : m_outputValues )
 	{
-		std::string name = _formatOutput( f.first );
+		std::string name = _evaluateConstTypename( f.first );
 		std::string type = "";
 		if( m_outputs.count( name ) )
 			type = m_outputs.at( name ).type;
 
-		std::string value = _formatArg( f.second, type );
+		std::string value = _evaluateTypename( f.second, type );
 		if( value == "" )
 			value = wv::format( "%s(0)", type );
 
@@ -242,4 +252,11 @@ std::string wv::GLSLFactory::_buildMain()
 	res += "}\n";
 
 	return res;
+}
+
+void wv::GLSLFactory::_loadDefaultVertexIdentifiers()
+{
+	m_identifiers[ "getAlbedoSampler" ] = "sampler2D";
+	m_identifiers[ "getModelMatrix"   ] = "mat4x4";
+	m_identifiers[ "getHasAlpha"      ] = "int";
 }
