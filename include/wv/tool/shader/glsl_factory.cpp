@@ -22,8 +22,8 @@ std::string wv::GLSLFactory::build()
 	
 	src += _buildInput();
 	src += _buildVertexInput();
-	src += _buildFragments();
 	src += _buildOutput();
+	src += _buildFragments();
 	src += _buildMain();
 
 	reset();
@@ -207,8 +207,7 @@ std::string wv::GLSLFactory::_buildFragments()
 
 std::string wv::GLSLFactory::_buildMain()
 {
-	std::string res;
-
+	std::string res = "\n// generated main\n";
 	res += "void main() {\n";
 
 	for( auto& f : m_executionFunctions )
@@ -225,11 +224,11 @@ std::string wv::GLSLFactory::_buildMain()
 			res += wv::format( "    %s %s = %s();\n", type.c_str(), f.returnName.c_str(), func.c_str() );
 		else
 		{
-			std::string args = " ";
+			std::string args = "";
 			for( size_t i = 0; i < f.args.size(); i++ )
 			{
 				std::string arg = _evaluateTypename( f.args[ i ], "" );
-				args += wv::format( "%s%s", arg.c_str(), i == f.args.size() - 1 ? " " : ", ");
+				args += wv::format( "%s%s", arg.c_str(), i == f.args.size() - 1 ? "" : ", ");
 			}
 			res += wv::format( "    %s %s = %s(%s);\n", type.c_str(), f.returnName.c_str(), f.name.c_str(), args.c_str() );
 		}
@@ -259,4 +258,5 @@ void wv::GLSLFactory::_loadDefaultVertexIdentifiers()
 	m_identifiers[ "getAlbedoSampler" ] = "sampler2D";
 	m_identifiers[ "getModelMatrix"   ] = "mat4x4";
 	m_identifiers[ "getHasAlpha"      ] = "int";
+	m_identifiers[ "texture"          ] = "vec4";
 }

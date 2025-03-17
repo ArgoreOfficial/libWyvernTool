@@ -26,7 +26,7 @@ void wv::Shader::Factory::addOutput( std::string _type, std::string _name, int32
 
 void wv::Shader::Factory::addFragment( const std::string& _returnType, const std::string& _name, const std::string& _body )
 {
-	m_fragments.push_back( _body + "\n" );
+	m_fragments.push_back( _body );
 	m_identifiers[ _name ] = _returnType;
 }
 

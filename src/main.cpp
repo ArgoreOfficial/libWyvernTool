@@ -3,78 +3,20 @@
 #include <vector>
 
 #include <wv/tool/shader/glsl_factory.h>
+#include <fstream>
 
-std::string generateVertShader();
-std::string generateFragShader();
 std::string generateBasicVertShader();
+std::string generateBasicFragShader();
 
 int main()
 {
+	std::ofstream vs( "basic_vs.glsl" );
+	vs << generateBasicVertShader();
 
-	//std::string vertSource = generateVertShader();
-	//printf( "================ test.vert ================\n" );
-	//printf( "%s\n", vertSource.c_str() );
-	
-	//std::string fragSource = generateFragShader();
-	//printf( "================ test.frag ================\n" );
-	//printf( "%s\n", fragSource.c_str() );
-
-	std::string basicVert = generateBasicVertShader();
-	printf( "================ basic.vert ================\n" );
-	printf( "%s\n", basicVert.c_str() );
-	printf( "===========================================\n" );
+	std::ofstream fs( "basic_fs.glsl" );
+	fs << generateBasicFragShader();
 
 	return 0;
-}
-
-std::string generateVertShader()
-{	
-	wv::GLSLFactory factory{};
-	factory.setStage( wv::Shader::kVertex );
-	factory.addVertexInput( "vec3", "Position"  );
-	factory.addVertexInput( "vec3", "Normal"    );
-	factory.addVertexInput( "vec3", "Tangent"   );
-	factory.addVertexInput( "vec4", "Color"     );
-	factory.addVertexInput( "vec2", "TexCoord0" );
-
-	factory.addOutput( "vec2", "out_TexCoord" );
-	factory.addOutput( "vec3", "out_Normal"   );
-	factory.addOutput( "vec4", "out_Position" );
-
-	factory.loadFragment( "inline/world_to_screen" );
-	factory.loadFragment( "funcs/light_mult" );
-
-	// void main() {
-	factory.addFunction( "position", "world_to_screen", { "${Position}" } );
-	factory.addFunction( "uv", "${TexCoord0}" );
-
-	factory.setOutputValue( "out_TexCoord",   "${TexCoord0}" );
-	factory.setOutputValue( "out_Normal",     "#{0.0}"       ); 
-	factory.setOutputValue( "${OutPosition}", "position"     );
-	// }
-
-	return factory.build();
-}
-
-std::string generateFragShader()
-{
-	wv::GLSLFactory factory;
-	factory.setStage( wv::Shader::kFragment );
-	factory.addInput( "vec2", "in_TexCoord" );
-	factory.addInput( "vec3", "in_Normal"   );
-	factory.addInput( "vec4", "in_Position" );
-
-	factory.addOutput( "vec4", "out_Albedo",            0 );
-	factory.addOutput( "vec2", "out_Normal",            1 );
-	factory.addOutput( "vec2", "out_RoughnessMetallic", 2 );
-
-	// void main() {
-	factory.setOutputValue( "out_Albedo",            "#{0.0}"       );
-	factory.setOutputValue( "out_Normal",            "in_Normal.xy" );
-	factory.setOutputValue( "out_RoughnessMetallic", "#{1.0}"       );
-	// }
-
-	return factory.build();
 }
 
 std::string generateBasicVertShader()
@@ -101,7 +43,6 @@ std::string generateBasicVertShader()
 
 	// void main() {
 	factory.addFunction( "model", "getModelMatrix" );
-
 	factory.addFunction( "view_pos", "world_to_view3", { "${Position}", "model" });
 	factory.addFunction( "clip_pos", "world_to_clip4", { "${Position}", "model" });
 	factory.addFunction( "world_norm", "tangent_to_world3", { "${Normal}", "model" });
@@ -113,6 +54,38 @@ std::string generateBasicVertShader()
 	factory.setOutputValue( "out_Normal",     "world_norm" );
 	factory.setOutputValue( "out_Position",	  "view_pos" );
 	factory.setOutputValue( "${OutPosition}", "clip_pos" );
+	// }
+
+	return factory.build();
+}
+
+std::string generateBasicFragShader()
+{
+	wv::GLSLFactory factory;
+	factory.setStage( wv::Shader::kFragment );
+	factory.addInput( "vec2", "in_TexCoord" );
+	factory.addInput( "vec3", "in_Normal" );
+	factory.addInput( "vec4", "in_Position" );
+	factory.addInput( "flat int ",      "in_InstanceID" );
+	factory.addInput( "flat sampler2D", "in_Albedo" );
+	factory.addInput( "flat int",       "in_HasAlpha" );
+
+	factory.addOutput( "vec4", "out_Albedo", 0 );
+	factory.addOutput( "vec2", "out_Normal", 1 );
+	factory.addOutput( "vec2", "out_RoughnessMetallic", 2 );
+	
+	factory.loadFragment( "core/texture" );
+	factory.loadFragment( "core/vec2" );
+	factory.loadFragment( "core/vec3" );
+	factory.loadFragment( "core/vec4" );
+	factory.loadFragment( "funcs/encode_normal_oct" );
+
+	// void main() {
+	factory.addFunction( "color", "texture", { "in_Albedo","in_TexCoord" } );
+	factory.addFunction( "normal", "encode_normal_oct", { "in_Normal" } );
+	factory.setOutputValue( "out_Albedo", "color" );
+	factory.setOutputValue( "out_Normal", "normal" );
+	factory.setOutputValue( "out_RoughnessMetallic", "#{1.0}" );
 	// }
 
 	return factory.build();
