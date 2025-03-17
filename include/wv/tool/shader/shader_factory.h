@@ -34,8 +34,9 @@ struct Function
 
 struct ShaderInputOutput
 {
-	int32_t bindpoint = -1;
 	std::string type;
+	bool flat = false; // if should be interpolated or not
+	int32_t bindpoint = -1;
 };
 
 enum Stage
@@ -50,8 +51,8 @@ class Factory
 public:
 	void setStage( Shader::Stage _stage );
 	void addVertexInput( std::string _type, std::string _name, uint32_t _count = 1 );
-	void addInput( std::string _type, std::string _name, int32_t bindpoint = -1 );
-	void addOutput( std::string _type, std::string _name, int32_t bindpoint = -1 );
+	void addInput( std::string _type, std::string _name, bool _flat = false, int32_t bindpoint = -1 );
+	void addOutput( std::string _type, std::string _name, bool _flat = false, int32_t bindpoint = -1 );
 
 	void addFragment( const std::string& _returnType, const std::string& _name, const std::string& _body );
 	void loadFragment( const std::string& _filename );

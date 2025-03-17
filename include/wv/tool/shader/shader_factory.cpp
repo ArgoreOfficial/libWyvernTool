@@ -14,14 +14,14 @@ void wv::Shader::Factory::addVertexInput( std::string _type, std::string _name, 
 	m_vertexInput.push_back( { _type, _name, _count } );
 }
 
-void wv::Shader::Factory::addInput( std::string _type, std::string _name, int32_t bindpoint )
+void wv::Shader::Factory::addInput( std::string _type, std::string _name, bool _flat, int32_t bindpoint )
 {
-	m_inputs[ _name ] = { bindpoint, _type };
+	m_inputs[ _name ] = { _type, _flat, bindpoint };
 }
 
-void wv::Shader::Factory::addOutput( std::string _type, std::string _name, int32_t bindpoint )
+void wv::Shader::Factory::addOutput( std::string _type, std::string _name, bool _flat, int32_t bindpoint )
 {
-	m_outputs[ _name ] = { bindpoint, _type };
+	m_outputs[ _name ] = { _type, _flat, bindpoint };
 }
 
 void wv::Shader::Factory::addFragment( const std::string& _returnType, const std::string& _name, const std::string& _body )

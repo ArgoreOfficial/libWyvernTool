@@ -30,11 +30,11 @@ std::string generateBasicVertShader()
 	factory.addVertexInput( "vec2", "TexCoord0" );
 
 	factory.addOutput( "vec2", "out_TexCoord" );
-	factory.addOutput( "vec3", "out_Normal" );
+	factory.addOutput( "vec3", "out_Normal"   );
 	factory.addOutput( "vec3", "out_Position" );
-	factory.addOutput( "flat int",       "out_InstanceID" );
-	factory.addOutput( "flat sampler2D", "out_Albedo" );
-	factory.addOutput( "flat int",       "out_HasAlpha" );
+	factory.addOutput( "int",  "out_InstanceID",  true );
+	factory.addOutput( "int",  "out_HasAlpha",    true );
+	factory.addOutput( "sampler2D", "out_Albedo", true );
 
 	factory.loadFragment( "inline/world_to_view3" );
 	factory.loadFragment( "inline/world_to_clip4" );
@@ -66,13 +66,13 @@ std::string generateBasicFragShader()
 	factory.addInput( "vec2", "in_TexCoord" );
 	factory.addInput( "vec3", "in_Normal" );
 	factory.addInput( "vec4", "in_Position" );
-	factory.addInput( "flat int ",      "in_InstanceID" );
-	factory.addInput( "flat sampler2D", "in_Albedo" );
-	factory.addInput( "flat int",       "in_HasAlpha" );
+	factory.addInput( "int ", "in_InstanceID",  true );
+	factory.addInput( "int",  "in_HasAlpha",    true );
+	factory.addInput( "sampler2D", "in_Albedo", true );
 
-	factory.addOutput( "vec4", "out_Albedo", 0 );
-	factory.addOutput( "vec2", "out_Normal", 1 );
-	factory.addOutput( "vec2", "out_RoughnessMetallic", 2 );
+	factory.addOutput( "vec4", "out_Albedo",            false, 0 );
+	factory.addOutput( "vec2", "out_Normal",            false, 1 );
+	factory.addOutput( "vec2", "out_RoughnessMetallic", false, 2 );
 	
 	factory.loadFragment( "funcs/encode_normal_oct" );
 

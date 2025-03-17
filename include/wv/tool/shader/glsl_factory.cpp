@@ -152,9 +152,9 @@ std::string wv::GLSLFactory::_buildInput()
 	{
 		Shader::ShaderInputOutput v = in.second;
 		if( v.bindpoint == -1 )
-			res += wv::format( "in %s %s;\n", v.type.c_str(), in.first.c_str() );
+			res += wv::format( "in %s%s %s;\n", v.flat ? "flat " : "", v.type.c_str(), in.first.c_str() );
 		else
-			res += wv::format( "layout(location = %i) out %s %s;\n", v.bindpoint, v.type.c_str(), in.first.c_str());
+			res += wv::format( "layout(location = %i) in %s%s %s;\n", v.flat ? "flat " : "", v.bindpoint, v.type.c_str(), in.first.c_str());
 	}
 	if( !m_inputs.empty() )
 		res += "\n";
@@ -201,9 +201,9 @@ std::string wv::GLSLFactory::_buildOutput()
 	{
 		Shader::ShaderInputOutput v = out.second;
 		if( v.bindpoint == -1 )
-			res += wv::format( "out %s %s;\n", v.type.c_str(), out.first.c_str() );
+			res += wv::format( "out %s%s %s;\n", v.flat ? "flat " : "", v.type.c_str(), out.first.c_str() );
 		else
-			res += wv::format( "layout(location = %i) out %s %s;\n", v.bindpoint, v.type.c_str(), out.first.c_str());
+			res += wv::format( "layout(location = %i) out %s%s %s;\n", v.bindpoint, v.flat ? "flat " : "", v.type.c_str(), out.first.c_str());
 	}
 	if( !m_outputs.empty() )
 		res += "\n";
