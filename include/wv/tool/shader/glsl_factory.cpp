@@ -70,12 +70,12 @@ std::string wv::GLSLFactory::_buildVertexPullFunction( const Shader::TypeDecl& _
 	Shader::TypeDecl v = _getRealVertexInputType( _input ); // for real component count
 
 	func += wv::format( "%s get%s(int _idx) {\n", _input.type, _input.name );
-	func += wv::format( "\treturn %s(\n", _input.type );
+	func += wv::format( "    return %s(\n", _input.type );
 
 	for( size_t i = 0; i < v.count; i++ )
-		func += wv::format( "\t\t%s[_idx].%s[%i]%s", m_vertexBufferName, _input.name, i, i == v.count - 1 ? "\n" : ",\n" );
+		func += wv::format( "        %s[_idx].%s[%i]%s", m_vertexBufferName, _input.name, i, i == v.count - 1 ? "\n" : ",\n" );
 
-	func += "\t);\n";
+	func += "    );\n";
 	func += "}\n";
 
 	return func;
@@ -149,9 +149,9 @@ std::string wv::GLSLFactory::_buildVertexInput()
 	{
 		Shader::TypeDecl v = _getRealVertexInputType( input );
 		if( v.count == 1 )
-			vertexStruct += wv::format( "\t%s %s;\n", v.type.c_str(), v.name.c_str() );
+			vertexStruct += wv::format( "    %s %s;\n", v.type.c_str(), v.name.c_str() );
 		else
-			vertexStruct += wv::format( "\t%s %s[%" PRIu32 "];\n", v.type.c_str(), v.name.c_str(), v.count );
+			vertexStruct += wv::format( "    %s %s[%" PRIu32 "];\n", v.type.c_str(), v.name.c_str(), v.count );
 	}
 	vertexStruct += wv::format( "};\n\n" );
 
@@ -206,13 +206,13 @@ std::string wv::GLSLFactory::_buildMain()
 		std::string func = _formatArg( f.name, "", true );
 		if( m_identifiers.count( func ) == 0 )
 		{
-			res += wv::format( "\t/* function %s not defined */\n", f.name.c_str() );
+			res += wv::format( "    /* function %s not defined */\n", f.name.c_str() );
 			continue;
 		}
 		std::string type = m_identifiers.at( func );
 		
 		if( f.name[ 0 ] == '$' )
-			res += wv::format( "\t%s %s = %s(gl_VertexID);\n", type.c_str(), f.returnName.c_str(), func.c_str() );
+			res += wv::format( "    %s %s = %s(gl_VertexID);\n", type.c_str(), f.returnName.c_str(), func.c_str() );
 		else
 		{
 			std::string args = " ";
@@ -221,7 +221,7 @@ std::string wv::GLSLFactory::_buildMain()
 				std::string arg = _formatArg( f.args[ i ], "" );
 				args += wv::format( "%s%s", arg.c_str(), i == f.args.size() - 1 ? " " : ", ");
 			}
-			res += wv::format( "\t%s %s = %s(%s);\n", type.c_str(), f.returnName.c_str(), f.name.c_str(), args.c_str() );
+			res += wv::format( "    %s %s = %s(%s);\n", type.c_str(), f.returnName.c_str(), f.name.c_str(), args.c_str() );
 		}
 	}
 
@@ -236,7 +236,7 @@ std::string wv::GLSLFactory::_buildMain()
 		if( value == "" )
 			value = wv::format( "%s(0)", type );
 
-		res += wv::format( "\t%s = %s;\n", name.c_str(), value.c_str() );
+		res += wv::format( "    %s = %s;\n", name.c_str(), value.c_str() );
 	}
 
 	res += "}\n";

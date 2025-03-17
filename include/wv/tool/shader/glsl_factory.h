@@ -27,37 +27,32 @@ private:
 	const std::string m_vertexBufferName = "u_vertices";
 	
 	const std::string m_vertexBuffer =
-		"layout( std430 ) buffer SbVertices\n"
-		"{\n"
-		"	vertex_t u_vertices[];\n"
+		"layout( std430 ) buffer SbVertices {\n"
+		"    vertex_t u_vertices[];\n"
 		"};\n";
 
 	const std::string m_outVertex =
-		"out gl_PerVertex\n"
-		"{\n"
-		"	vec4 gl_Position;\n"
+		"out gl_PerVertex {\n"
+		"    vec4 gl_Position;\n"
 		"};\n";
 
 	const std::string m_cameraData =
-		"uniform UbCameraData\n"
-		"{\n"
-		"	mat4x4 u_Projection;\n"
-		"	mat4x4 u_View;\n"
-		"	mat4x4 u_Model;\n"
+		"uniform UbCameraData {\n"
+		"    mat4x4 u_Projection;\n"
+		"    mat4x4 u_View;\n"
+		"    mat4x4 u_Model;\n"
 		"};\n";
 		
 	const std::string m_instanceData =
-		"struct sInstance\n"
-		"{\n"
-		"	mat4x4 Model;\n"
-		"	uvec2 TextureHandles[ 4 ];\n"
-		"	int HasAlpha;\n"
-		"	int padding0[ 3 ];\n"
+		"struct sInstance {\n"
+		"    mat4x4 Model;\n"
+		"    uvec2 TextureHandles[ 4 ];\n"
+		"    int HasAlpha;\n"
+		"    int padding0[ 3 ];\n"
 		"};\n"
 		"\n"
-		"layout( std430 ) buffer SbInstances\n"
-		"{\n"
-		"	sInstance u_instances[];\n"
+		"layout( std430 ) buffer SbInstances {\n"
+		"    sInstance u_instances[];\n"
 		"};\n";
 
 	const std::string m_instanceFunctions =
