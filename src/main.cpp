@@ -3,12 +3,24 @@
 #include <vector>
 
 #include <wv/tool/shader/glsl_factory.h>
+#include <wv/svensk.hpp>
 
 std::string generateVertShader();
 std::string generateFragShader();
 
+tom gör_saker som_tar_in stor_siffra _a, bred_karaktär_t _w som_parametrar då
+	skrivare som_tar_in "_a plus _w är %i\n", _a plus _w som_parametrar radslut
+slut
+
+tom funktion som_inte_tar_några_parametrar då
+	konstant siffra som_inte_kan_gå_minus antal_träd är tolv;
+slut
+
 int main()
 {
+	gör_saker som_tar_in 1, 4 som_parametrar radslut
+	funktion som_inte_tar_några_parametrar radslut
+
 	std::string vertSource = generateVertShader();
 	std::string fragSource = generateFragShader();
 	printf( "================ test.vert ================\n" );
